@@ -36,7 +36,7 @@ reset_timings()
 loader = DataLoader(test_set, batch_size=64, shuffle=True)
 
 tokens = 0
-for _ in range(100):
+for _ in range(200):
     batch = next(iter(loader))
     tokens += batch["input_ids"].nelement()
 
@@ -46,7 +46,7 @@ handle_masking_time = function_timings["_handle_masking"]
 generate_masked_tokens_and_ids_time = function_timings["_generate_masked_tokens_and_ids"]
 create_output_time = function_timings["_create_output"]
 
-print(f"average fetch time: {np.mean(fetch_time)}")
-print(f"average handle masking time: {np.mean(handle_masking_time)}")
-print(f"average generate masked tokens and ids time: {np.mean(generate_masked_tokens_and_ids_time)}")
-print(f"average create output time: {np.mean(create_output_time)}")
+print(f"average fetch time: {np.mean(fetch_time):.3f}")
+print(f"average handle masking time: {np.mean(handle_masking_time):.3f}")
+print(f"average generate masked tokens and ids time: {np.mean(generate_masked_tokens_and_ids_time):.3f}")
+print(f"average create output time: {np.mean(create_output_time):.3f} ms")
