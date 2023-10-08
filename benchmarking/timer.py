@@ -1,15 +1,26 @@
 import time
-from functools import wraps
+import functools
+from collections import defaultdict
+
+# Global timings dictionary
+function_timings = defaultdict(list)
 
 
 def timer(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
+    @functools.wraps(func)
+    def wrapper_timer(*args, **kwargs):
         start_time = time.time()
-        result = func(*args, **kwargs)
+        value = func(*args, **kwargs)
         end_time = time.time()
-        elapsed_time = (end_time - start_time) * 1_000_000  # convert to microseconds
-        print(f"Function {func.__name__} took {elapsed_time:.2f} microseconds.")
-        return result
+        elapsed_time = (end_time - start_time) * 1_000_000  # microseconds
 
-    return wrapper
+        # Store the timing
+        function_timings[func.__name__].append(elapsed_time)
+
+        return value
+
+    return wrapper_timer
+
+
+def reset_timings():
+    function_timings.clear()
