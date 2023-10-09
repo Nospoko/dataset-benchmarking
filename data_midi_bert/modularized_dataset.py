@@ -94,12 +94,11 @@ class MyMaskedMidiDataset(TorchDataset):
 
     @timer
     def _generate_masked_tokens_and_ids(self, tokens, to_mask, mask_name_token):
-        masked = [token if it not in to_mask else self.encoder.mask_token for it, token in enumerate(tokens)]
         tokens = [mask_name_token] + tokens
-        token_ids = self.encoder.tokens_to_token_ids(tokens)
-        masked = [mask_name_token] + masked
-        masked_ids = self.encoder.tokens_to_token_ids(masked)
-        return token_ids, masked_ids
+        masked = tokens.copy()
+        for idx in to_mask:
+            masked[idx + 1] = self.encoder.mask_token  # +1 to account for mask_name_token
+        return self.encoder.tokens_to_token_ids(tokens), self.encoder.tokens_to_token_ids(masked)
 
     @timer
     def _create_output(self, token_ids, masked_ids, to_mask):
