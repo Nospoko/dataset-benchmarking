@@ -47,7 +47,7 @@ for batch_size in tqdm(BATCH_SIZES):
 
     # Warm-up phase: loop a few times but don't measure the time
     # This is to avoid including cache time in the measurement
-    for _ in range(3):
+    for _ in range(1):
         for _ in loader:
             pass
 
