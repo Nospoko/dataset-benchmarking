@@ -91,6 +91,7 @@ class MidiDataset(Dataset):
         filename = record["midi_filename"]
         return record, filename
 
+    @timer
     def _replace_nan(self, record: dict):
         if np.any(np.isnan(record["dstart"])):
             record["dstart"] = np.nan_to_num(record["dstart"], copy=False)

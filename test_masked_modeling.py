@@ -29,7 +29,12 @@ token = os.environ["HUGGINGFACE_TOKEN"]
 maestro_test = load_dataset("SneakyInsect/masked-maestro-2", split="test", use_auth_token=token)
 
 test_set = MidiDataset(
-    maestro_test, quantizer, tokenizer, pitch_shift_probability=0.0, time_stretch_probability=0.0, masking_probability=0.15
+    maestro_test,
+    quantizer,
+    tokenizer,
+    pitch_shift_probability=0.0,
+    time_stretch_probability=0.0,
+    masking_probability=0.15,
 )
 
 # Set desired batch sizes to loop over
