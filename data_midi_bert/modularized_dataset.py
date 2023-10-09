@@ -86,11 +86,9 @@ class MyMaskedMidiDataset(TorchDataset):
     @timer
     def _handle_masking(self, mask):
         masking_probability = self._masking_probability()
-        n_masked = np.random.binomial(mask.shape[0], masking_probability)
-        n_masked = min(n_masked, mask.sum())
         to_mask = np.where(mask)[0]
-        to_mask = np.random.choice(to_mask, size=n_masked, replace=False)
-        return to_mask, masking_probability
+        n_masked = min(np.random.binomial(len(to_mask), masking_probability), len(to_mask))
+        return np.random.choice(to_mask, size=n_masked, replace=False), masking_probability
 
     @timer
     def _generate_masked_tokens_and_ids(self, tokens, to_mask, mask_name_token):
@@ -104,11 +102,12 @@ class MyMaskedMidiDataset(TorchDataset):
     def _create_output(self, token_ids, masked_ids, to_mask):
         mask_tensor = torch.zeros(self.sequence_len, dtype=torch.bool)
         mask_tensor[to_mask] = True
+
         labels = torch.tensor(token_ids, dtype=torch.long)
-        labels[1:][~mask_tensor] = -100
-        labels[0] = -100
-        out = {"labels": labels, "input_ids": torch.tensor(masked_ids, dtype=torch.long), "mask": mask_tensor}
-        return out
+        labels[1:][~mask_tensor] = -100  # Exclude unmasked tokens
+        labels[0] = -100  # Always exclude the first token
+
+        return {"labels": labels, "input_ids": torch.tensor(masked_ids, dtype=torch.long), "mask": mask_tensor}
 
     def __rich_repr__(self):
         yield "MyMaskedMidiDataset"
