@@ -13,7 +13,5 @@ tokenized_record = tokenizer.encode(record, segments=1)
 decoded_record = tokenizer.decode(tokenized_record)
 
 for token in tokenized_record:
-    if token["name"] == "Position":
+    if token["name"] == "Bar":
         print(token)
-
-print(tokenizer.ticks_per_second)
