@@ -8,6 +8,12 @@ record = data_train[0]["notes"]
 tokenizer = REMITokenizer()
 
 # Encode
-tokenized_record = tokenizer.encode(record, segments=4)
+tokenized_record = tokenizer.encode(record, segments=1)
 
 decoded_record = tokenizer.decode(tokenized_record)
+
+for token in tokenized_record:
+    if token["name"] == "Position":
+        print(token)
+
+print(tokenizer.ticks_per_second)

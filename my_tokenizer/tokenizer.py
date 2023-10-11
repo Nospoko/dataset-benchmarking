@@ -20,20 +20,22 @@ class REMITokenizer(Tokenizer):
         # assume that the longest note is 20 seconds
         self.duration_bins = np.linspace(0, 4800, duration_bins + 1, dtype=int)
 
+        self.ticks_per_second = self.tpb / (60 / self.bpm)
+
     def time_to_ticks(self, data):
         seconds_per_beat = 60 / self.bpm
         data["start_ticks"] = round(data["start"] / seconds_per_beat * self.tpb)
         data["end_ticks"] = round(data["end"] / seconds_per_beat * self.tpb)
+        data["time"] = data["start_ticks"]
 
     def quantize_ticks(self, data):
         ticks = self.resolution
         grids = np.arange(0, max(data["start_ticks"], data["end_ticks"]) + ticks, ticks, dtype=int)
 
-        data["start_ticks"] = grids[np.abs(grids - data["start_ticks"]).argmin()]
-        data["end_ticks"] = grids[np.abs(grids - data["end_ticks"]).argmin()]
+        data["time"] = grids[np.abs(grids - data["start_ticks"]).argmin()]
 
     def group_data(self, data):
-        ticks_per_bar = self.resolution * 4
+        ticks_per_bar = self.resolution
         max_time = data["end_ticks"]
         downbeats = np.arange(0, max_time + ticks_per_bar, ticks_per_bar)
         groups = []
@@ -55,7 +57,7 @@ class REMITokenizer(Tokenizer):
         events.append(
             {
                 "name": "Position",
-                "time": note_data["start_ticks"],
+                "time": note_data["time"],
                 "value": f"{index+1}/{self.fraction}",
                 "text": str(note_data["start_ticks"]),
             }
@@ -66,7 +68,7 @@ class REMITokenizer(Tokenizer):
         events.append(
             {
                 "name": "Note Velocity",
-                "time": note_data["start_ticks"],
+                "time": note_data["time"],
                 "value": velocity_index,
                 "text": f'{note_data["velocity"]}/{self.velocity_bins[velocity_index]}',
             }
@@ -74,7 +76,12 @@ class REMITokenizer(Tokenizer):
 
         # Pitch
         events.append(
-            {"name": "Note On", "time": note_data["start_ticks"], "value": note_data["pitch"], "text": str(note_data["pitch"])}
+            {
+                "name": "Note On",
+                "time": note_data["time"],
+                "value": note_data["pitch"],
+                "text": str(note_data["pitch"]),
+            }
         )
 
         # Duration
@@ -83,7 +90,7 @@ class REMITokenizer(Tokenizer):
         events.append(
             {
                 "name": "Note Duration",
-                "time": note_data["start_ticks"],
+                "time": note_data["time"],
                 "value": index,
                 "text": f"{duration}/{self.duration_bins[index]}",
             }
@@ -134,7 +141,7 @@ class REMITokenizer(Tokenizer):
                 # Decode the position (start_ticks) from the fraction
                 fraction_val = int(event["value"].split("/")[0])
                 bar_st = event["time"] - (self.resolution / self.fraction) * (fraction_val - 1)
-                bar_et = bar_st + self.resolution * 4
+                bar_et = bar_st + self.resolution
                 start_ticks = bar_st + (bar_et - bar_st) * (fraction_val - 1) / (self.fraction - 1)
 
             elif event_name == "Note Velocity":
