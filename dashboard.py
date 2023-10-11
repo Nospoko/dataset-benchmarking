@@ -43,10 +43,22 @@ def main():
         # Show available checkpoints
         segments = st.selectbox(label="segments", options=[x for x in range(1, 10)])
         record_idx = st.text_input(label="record_idx", value="0")
+
+        # Tokenizer settings
+        st.subheader("Tokenizer Settings")
+        bpm = st.slider("BPM", min_value=60, max_value=240, value=120)
+        tpb = st.slider("TPB", min_value=120, max_value=960, value=480)
+        resolution = st.slider("Resolution", min_value=60, max_value=960, value=480)
+        fraction = st.slider("Fraction", min_value=1, max_value=32, value=16)
+        velocity_bins = st.slider("Velocity Bins", min_value=1, max_value=128, value=32)
+        duration_bins = st.slider("Duration Bins", min_value=1, max_value=128, value=64)
+
         record = data_train[int(record_idx)]["notes"]
 
-    # Load selected checkpoint
-    tokenizer = REMITokenizer(bpm=120, tpb=480, resolution=480, fraction=16, velocity_bins=32, duration_bins=64)
+    # Use the settings to create the tokenizer
+    tokenizer = REMITokenizer(
+        bpm=bpm, tpb=tpb, resolution=resolution, fraction=fraction, velocity_bins=velocity_bins, duration_bins=duration_bins
+    )
 
     tokenized_record = tokenizer.encode(record, segments=segments)
     decoded_record = tokenizer.decode(tokenized_record)

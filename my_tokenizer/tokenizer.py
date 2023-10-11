@@ -17,7 +17,8 @@ class REMITokenizer(Tokenizer):
         self.resolution = resolution
         self.fraction = fraction
         self.velocity_bins = np.linspace(0, 128, velocity_bins + 1, dtype=int)
-        self.duration_bins = np.arange(60, 3841, 60, dtype=int)[:duration_bins]
+        # assume that the longest note is 20 seconds
+        self.duration_bins = np.linspace(0, 4800, duration_bins + 1, dtype=int)
 
     def time_to_ticks(self, data):
         seconds_per_beat = 60 / self.bpm
