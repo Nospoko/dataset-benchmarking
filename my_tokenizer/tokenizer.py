@@ -121,7 +121,7 @@ class REMITokenizer(Tokenizer):
 
     def decode(self, tokenized_data):
         # Initialize the resulting data
-        result = {"start": [], "end": [], "pitch": [], "velocity": []}
+        result = {"start": [], "end": [], "pitch": [], "velocity": [], "duration": []}
 
         # Temporary variables to store data until a full note has been processed
         start_ticks, end_ticks, pitch, velocity = None, None, None, None
@@ -164,6 +164,7 @@ class REMITokenizer(Tokenizer):
                 result["end"].append(end_time)
                 result["pitch"].append(pitch)
                 result["velocity"].append(velocity)
+                result["duration"].append(end_time - start_time)
                 start_ticks, end_ticks, pitch, velocity = None, None, None, None
 
         return result
