@@ -64,6 +64,20 @@ def main():
 
         record = data_train[int(record_idx)]["notes"]
 
+        st.subheader("Settings explanation")
+        st.write(
+            """
+            - **segments**: number of 15-note segments to encode
+            - **record_idx**: index of the record to encode
+            - **BPM**: Beats per minute
+            - **TPB**: Ticks per beat
+            - **Resolution**: Resolution of the grid in ticks
+            - **Fraction**: Fraction of a beat, e.g. 16 means it's patitioned into 16th notes
+            - **Velocity Bins**: Number of velocity bins for quantization
+            - **Duration Bins**: Number of duration bins for quantization
+            """
+        )
+
     # Use the settings to create the tokenizer
     tokenizer = REMITokenizer(
         bpm=bpm, tpb=tpb, resolution=resolution, fraction=fraction, velocity_bins=velocity_bins, duration_bins=duration_bins
