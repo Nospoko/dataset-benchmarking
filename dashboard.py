@@ -1,10 +1,38 @@
+import pandas
 import streamlit as st
 from datasets import load_dataset
+from fortepyan import MidiFile, MidiPiece
 
 from my_tokenizer.tokenizer import REMITokenizer
 from utils.midi_tools import save_midi, plot_piano_roll, convert_to_dstart, to_fortepyan_midi, render_midi_to_mp3
 
 st.set_page_config(layout="wide", page_title="Tokenizer effect", page_icon=":musical_keyboard")
+
+
+def piece_selector() -> pandas.DataFrame:
+    # Use sidebar methods for the UI components
+    # with st.sidebar:
+    uploaded_file = st.file_uploader("Choose a MIDI file", type=["midi", "mid"])
+    if uploaded_file is not None:
+        midi_file = MidiFile(uploaded_file)
+        piece = midi_file.piece
+        piece.source["path"] = "file uploaded with streamlit"
+    else:
+        st.write("Or use a dataset")
+        dataset_names = ["roszcz/maestro-v1-sustain"]
+        dataset_name = st.selectbox(label="dataset", options=dataset_names)
+        split = st.selectbox(label="split", options=["test", "validation", "train"])
+        # Test/77 is Chopin "Etude Op. 10 No. 12"
+        record_id = st.number_input(label="record id", value=77)
+
+        hf_dataset = load_dataset(dataset_name, split=split)
+
+        # Select one full piece
+        record = hf_dataset[record_id]
+
+        piece = MidiPiece.from_huggingface(record)
+
+    return piece.df
 
 
 def get_midi(record):
@@ -46,15 +74,10 @@ def display_audio(fortepyan_midi, title="MIDI", filename="midi"):
 
 
 def main():
-    data_train = load_dataset("roszcz/maestro-v1-sustain", split="train")
-
     with st.sidebar:
-        # Show available checkpoints
-        segments = st.selectbox(label="segments", options=[x for x in range(1, 10)])
-        record_idx = st.text_input(label="record_idx", value="0")
-
         # Tokenizer settings
         st.subheader("Tokenizer Settings")
+        segments = st.slider("Segments", min_value=1, max_value=10, value=1)
         bpm = st.slider("BPM", min_value=60, max_value=240, value=120)
         tpb = st.slider("TPB", min_value=120, max_value=960, value=480)
         resolution = st.slider("Resolution", min_value=60, max_value=960, value=480)
@@ -62,13 +85,12 @@ def main():
         velocity_bins = st.slider("Velocity Bins", min_value=1, max_value=128, value=32)
         duration_bins = st.slider("Duration Bins", min_value=1, max_value=128, value=64)
 
-        record = data_train[int(record_idx)]["notes"]
-
+        record = piece_selector()
+        record.to_dict()
         st.subheader("Settings explanation")
         st.write(
             """
             - **segments**: number of 15-note segments to encode
-            - **record_idx**: index of the record to encode
             - **BPM**: Beats per minute
             - **TPB**: Ticks per beat
             - **Resolution**: Resolution of the grid in ticks
