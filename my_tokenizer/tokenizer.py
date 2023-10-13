@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 class Tokenizer:
@@ -22,26 +23,25 @@ class REMITokenizer(Tokenizer):
 
         self.ticks_per_second = self.tpb / (60 / self.bpm)
 
-    def time_to_ticks(self, data):
+    def time_to_ticks(self, data_df):
         seconds_per_beat = 60 / self.bpm
-        data["start_ticks"] = round(data["start"] / seconds_per_beat * self.tpb)
-        data["end_ticks"] = round(data["end"] / seconds_per_beat * self.tpb)
-        data["time"] = data["start_ticks"]
+        data_df["start_ticks"] = round(data_df["start"] / seconds_per_beat * self.tpb)
+        data_df["end_ticks"] = round(data_df["end"] / seconds_per_beat * self.tpb)
+        data_df["time"] = data_df["start_ticks"]
 
-    def quantize_ticks(self, data):
+    def quantize_ticks(self, data_df):
         ticks = self.resolution
-        grids = np.arange(0, max(data["start_ticks"], data["end_ticks"]) + ticks, ticks, dtype=int)
-
-        data["time"] = grids[np.abs(grids - data["start_ticks"]).argmin()]
+        grids = np.arange(0, data_df[["start_ticks", "end_ticks"]].max().max() + ticks, ticks, dtype=int)
+        data_df["time"] = grids[np.abs(np.subtract.outer(grids, data_df["start_ticks"].to_numpy())).argmin(axis=0)]
 
     def group_data(self, tokenized_data):
         ticks_per_bar = self.resolution
-        max_time = max(note["end_ticks"] for note in tokenized_data)
+        max_time = tokenized_data["end_ticks"].max()
         downbeats = np.arange(0, max_time + ticks_per_bar, ticks_per_bar)
         groups = []
 
         for db1, db2 in zip(downbeats[:-1], downbeats[1:]):
-            bar_notes = [note for note in tokenized_data if db1 <= note["start_ticks"] < db2]
+            bar_notes = tokenized_data[(tokenized_data["start_ticks"] >= db1) & (tokenized_data["start_ticks"] < db2)]
             groups.append([db1, bar_notes, db2])
 
         return groups
@@ -83,7 +83,7 @@ class REMITokenizer(Tokenizer):
                 }
             )
 
-            for note_data in bar_notes:
+            for _, note_data in bar_notes.iterrows():
                 # Position
                 flags = np.linspace(bar_st, bar_et, self.fraction, endpoint=False)
                 index = np.argmin(abs(flags - note_data["start_ticks"]))
@@ -131,20 +131,10 @@ class REMITokenizer(Tokenizer):
 
         return events
 
-    def random_slice(self, data_dict, segment_length):
-        """Randomly slice the data dictionary based on segment length."""
-        if len(data_dict["duration"]) <= segment_length:
-            return data_dict
+    def random_slice(self, data_df, segment_length):
+        return data_df.iloc[:segment_length]
 
-        start_idx = 0  # fixed at 0 for now until I come up with a better way to handle time ticks.
-
-        sliced_data = {}
-        for key, values in data_dict.items():
-            sliced_data[key] = values[start_idx : start_idx + segment_length]
-
-        return sliced_data
-
-    def encode(self, data_dict, segments=1):
+    def encode(self, data_df: pd.DataFrame, segments=1):
         """
         Encode the data dictionary into a list of events
 
@@ -163,21 +153,13 @@ class REMITokenizer(Tokenizer):
             Number of tokens used to encode the data
         """
         segment_length = segments * 15
-        print("segment_length:", segment_length)
-        sliced_data = self.random_slice(data_dict, segment_length)
+        sliced_data = self.random_slice(data_df, segment_length)
+        self.time_to_ticks(sliced_data)
+        self.quantize_ticks(sliced_data)
+        groups = self.group_data(sliced_data)
+        tokenized_data = self.groups_to_events(groups)
 
-        tokenized_data = []
-        for i in range(segment_length):
-            note_data = {key: val[i] for key, val in sliced_data.items()}
-            self.time_to_ticks(note_data)
-            self.quantize_ticks(note_data)
-            tokenized_data.append(note_data)
-        tokenized_data = self.group_data(tokenized_data)
-        tokenized_data = self.groups_to_events(tokenized_data)
-
-        number_of_tokens = len(tokenized_data)
-
-        return tokenized_data, number_of_tokens
+        return tokenized_data, len(tokenized_data)
 
     def decode(self, tokenized_data):
         result = {"start": [], "end": [], "pitch": [], "velocity": [], "duration": []}

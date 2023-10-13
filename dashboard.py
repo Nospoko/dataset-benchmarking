@@ -50,7 +50,6 @@ def compute_time_mse(original_record, decoded_record, attribute="dstart"):
     """Calculate Mean Squared Error for start times between original and decoded records."""
     assert len(original_record[attribute]) == len(decoded_record[attribute]), "Both records should have the same length"
     errors = [(o - r) ** 2 for o, r in zip(original_record[attribute], decoded_record[attribute])]
-    print(errors)
     mse = sum(errors) / len(errors)
     return mse
 
@@ -86,7 +85,6 @@ def main():
         duration_bins = st.slider("Duration Bins", min_value=1, max_value=128, value=64)
 
         record = piece_selector()
-        record.to_dict()
         st.subheader("Settings explanation")
         st.write(
             """
