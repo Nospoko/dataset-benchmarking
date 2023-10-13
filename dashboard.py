@@ -59,6 +59,8 @@ def main():
     tokenizer = REMITokenizer(
         bpm=bpm, tpb=tpb, resolution=resolution, fraction=fraction, velocity_bins=velocity_bins, duration_bins=duration_bins
     )
+    st.subheader("Tokenizer info")
+    st.write(f"Vocabulary size: {tokenizer.vocabulary_size()}")
 
     tokenized_record = tokenizer.encode(record, segments=segments)
     decoded_record = tokenizer.decode(tokenized_record)

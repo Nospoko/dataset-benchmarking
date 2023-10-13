@@ -46,6 +46,27 @@ class REMITokenizer(Tokenizer):
 
         return groups
 
+    def vocabulary_size(self):
+        # For "Bar" event
+        bar_vocab = 1
+
+        # For "Position" event
+        position_vocab = self.fraction
+
+        # For "Note Velocity" event
+        velocity_vocab = len(self.velocity_bins) - 1  # Number of bins - 1
+
+        # For "Note On" event (MIDI pitches range from 0 to 127)
+        note_on_vocab = 128
+
+        # For "Note Duration" event
+        duration_vocab = len(self.duration_bins) - 1  # Number of bins - 1
+
+        # Summing all the individual vocabularies
+        total_vocab = bar_vocab + position_vocab + velocity_vocab + note_on_vocab + duration_vocab
+
+        return total_vocab
+
     def groups_to_events(self, groups):
         events = []
 
