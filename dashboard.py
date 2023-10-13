@@ -18,6 +18,15 @@ def get_midi(record):
     return fortepyan_midi
 
 
+def compute_time_mse(original_record, decoded_record, attribute="dstart"):
+    """Calculate Mean Squared Error for start times between original and decoded records."""
+    assert len(original_record[attribute]) == len(decoded_record[attribute]), "Both records should have the same length"
+    errors = [(o - r) ** 2 for o, r in zip(original_record[attribute], decoded_record[attribute])]
+    print(errors)
+    mse = sum(errors) / len(errors)
+    return mse
+
+
 def display_audio(fortepyan_midi, title="MIDI", filename="midi"):
     st.title(title)
 
@@ -59,14 +68,19 @@ def main():
     tokenizer = REMITokenizer(
         bpm=bpm, tpb=tpb, resolution=resolution, fraction=fraction, velocity_bins=velocity_bins, duration_bins=duration_bins
     )
+
+    tokenized_record, num_of_tokens = tokenizer.encode(record, segments=segments)
+    decoded_record = tokenizer.decode(tokenized_record)
+
     st.subheader("Tokenizer info")
     st.write(f"Vocabulary size: {tokenizer.vocabulary_size()}")
-
-    tokenized_record = tokenizer.encode(record, segments=segments)
-    decoded_record = tokenizer.decode(tokenized_record)
+    st.write(f"{num_of_tokens} tokens used to encode {segments*15} notes")
 
     record = convert_to_dstart(record, split=segments * 15)
     decoded_record = convert_to_dstart(decoded_record)
+    time_mse = compute_time_mse(record, decoded_record)
+
+    st.write(f"MSE for dstart: {time_mse}")
 
     fortepyan_midi = get_midi(record)
     fortepyan_midi_decoded = get_midi(decoded_record)

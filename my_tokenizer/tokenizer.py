@@ -145,6 +145,23 @@ class REMITokenizer(Tokenizer):
         return sliced_data
 
     def encode(self, data_dict, segments=1):
+        """
+        Encode the data dictionary into a list of events
+
+        Parameters
+        ----------
+        data_dict : dict
+            Dictionary containing the note data
+        segments : int
+            Number of segments; each segment corresponds to 15 notes
+
+        Returns
+        -------
+        tokenized_data : list
+            List of events (tokenized data)
+        number_of_tokens : int
+            Number of tokens used to encode the data
+        """
         segment_length = segments * 15
         print("segment_length:", segment_length)
         sliced_data = self.random_slice(data_dict, segment_length)
@@ -157,7 +174,10 @@ class REMITokenizer(Tokenizer):
             tokenized_data.append(note_data)
         tokenized_data = self.group_data(tokenized_data)
         tokenized_data = self.groups_to_events(tokenized_data)
-        return tokenized_data
+
+        number_of_tokens = len(tokenized_data)
+
+        return tokenized_data, number_of_tokens
 
     def decode(self, tokenized_data):
         result = {"start": [], "end": [], "pitch": [], "velocity": [], "duration": []}
