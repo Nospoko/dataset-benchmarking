@@ -90,7 +90,7 @@ class REMITokenizer(Tokenizer):
                 events.append(
                     {
                         "name": "Position",
-                        "time": note_data["time"],
+                        "time": bar_st,
                         "value": f"{index+1}/{self.fraction}",
                         "text": str(note_data["start_ticks"]),
                     }
@@ -101,7 +101,7 @@ class REMITokenizer(Tokenizer):
                 events.append(
                     {
                         "name": "Note Velocity",
-                        "time": note_data["time"],
+                        "time": bar_st,
                         "value": velocity_index,
                         "text": f'{note_data["velocity"]}/{self.velocity_bins[velocity_index]}',
                     }
@@ -111,7 +111,7 @@ class REMITokenizer(Tokenizer):
                 events.append(
                     {
                         "name": "Note On",
-                        "time": note_data["time"],
+                        "time": bar_st,
                         "value": note_data["pitch"],
                         "text": str(note_data["pitch"]),
                     }
@@ -123,7 +123,7 @@ class REMITokenizer(Tokenizer):
                 events.append(
                     {
                         "name": "Note Duration",
-                        "time": note_data["time"],
+                        "time": bar_st,
                         "value": index,
                         "text": f"{duration}/{self.duration_bins[index]}",
                     }
@@ -180,9 +180,8 @@ class REMITokenizer(Tokenizer):
             if event_name == "Position":
                 # Decode the position (start_ticks) from the fraction
                 fraction_val = int(event["value"].split("/")[0])
-                bar_st = event["time"] - (self.resolution / self.fraction) * (fraction_val - 1)
-                bar_et = bar_st + self.resolution
-                start_ticks = bar_st + (bar_et - bar_st) * (fraction_val - 1) / (self.fraction - 1)
+                bar_st = event["time"]
+                start_ticks = bar_st + (self.resolution * (fraction_val - 1) / (self.fraction - 1))
 
             elif event_name == "Note Velocity":
                 velocity_index = event["value"]
